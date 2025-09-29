@@ -368,8 +368,7 @@ date: <strong>2025-09-19</strong></p>
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
 ## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-<pre class="r"><code>library(tibble)
-library(ggplot2)</code></pre>
+<pre class="r"><code>library(tibble)</code></pre>
 <p>Importing pols-month data set:</p>
 <pre class="r"><code>pols_df = (
   read_csv(&quot;fivethirtyeight_datasets/pols-month.csv&quot;) |&gt; 
@@ -408,6 +407,38 @@ library(ggplot2)</code></pre>
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<p>Cleaning the data in pols_df:</p>
+<pre class="r"><code>pols_df &lt;- pols_df |&gt; 
+  separate(mon, into = c(&quot;year&quot;, &quot;month&quot;, &quot;day&quot;), sep = &quot;-&quot;) |&gt; 
+  mutate(
+    year = as.integer(year),
+    month = month.name[as.integer(month)],
+    day = as.integer(day),
+    president = case_when(
+      prez_dem == 1 ~ &quot;dem&quot;,
+      prez_gop == 1 ~ &quot;gop&quot;,
+      TRUE ~ NA_character_  # to get rid of any missing values
+    )
+  ) |&gt; 
+  select(-prez_dem, -prez_gop, -day) #drops old columns</code></pre>
+<p>Cleaning the data in snp_df:</p>
+<pre class="r"><code>snp_df &lt;- snp_df |&gt; 
+  separate(date, into = c(&quot;month&quot;, &quot;day&quot;, &quot;year&quot;), sep = &quot;/&quot;) |&gt; 
+  mutate(
+    year = as.integer(year),
+    month = month.name[as.integer(month)],
+    day = as.integer(day),
+    year = ifelse(year &lt; 50, year + 2000, year + 1900),
+  ) |&gt; 
+  select(-day) |&gt;  # drops old column
+  select(year, month, close)</code></pre>
+<p>Cleaning the data in unemployment_df:</p>
+<pre class="r"><code>unemployment_df &lt;- unemployment_df |&gt; 
+  pivot_longer(
+    cols = jan:dec,      # pivot these columns
+    names_to = &quot;month&quot;,  # new name is &quot;month&quot;
+    values_to = &quot;unemployment (%)&quot;  # new column is for the values
+  )</code></pre>
 
 
 

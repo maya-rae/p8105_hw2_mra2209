@@ -14,7 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 library(tibble)
-library(ggplot2)
 ```
 
 Importing pols-month data set:
@@ -42,5 +41,44 @@ snp_df = (
 )
 ```
 
+Cleaning the data in pols_df:
+```{r}
+pols_df <- pols_df |> 
+  separate(mon, into = c("year", "month", "day"), sep = "-") |> 
+  mutate(
+    year = as.integer(year),
+    month = month.name[as.integer(month)],
+    day = as.integer(day),
+    president = case_when(
+      prez_dem == 1 ~ "dem",
+      prez_gop == 1 ~ "gop",
+      TRUE ~ NA_character_  # to get rid of any missing values
+    )
+  ) |> 
+  select(-prez_dem, -prez_gop, -day) #drops old columns
+```
 
+Cleaning the data in snp_df:
+```{r}
+snp_df <- snp_df |> 
+  separate(date, into = c("month", "day", "year"), sep = "/") |> 
+  mutate(
+    year = as.integer(year),
+    month = month.name[as.integer(month)],
+    day = as.integer(day),
+    year = ifelse(year < 50, year + 2000, year + 1900),
+  ) |> 
+  select(-day) |>  # drops old column
+  select(year, month, close)
+```
+
+Cleaning the data in unemployment_df:
+```{r}
+unemployment_df <- unemployment_df |> 
+  pivot_longer(
+    cols = jan:dec,      # pivot these columns
+    names_to = "month",  # new name is "month"
+    values_to = "unemployment (%)"  # new column is for the values
+  )
+```
 
