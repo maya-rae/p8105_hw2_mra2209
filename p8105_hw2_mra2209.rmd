@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(tibble)
 ```
-
+# **Problem 1**  
 Importing pols-month data set:
 ```{r}
 pols_df = (
@@ -25,7 +25,7 @@ pols_df = (
 
 ```
 
-Importing unemployment.csv data set:
+### Importing unemployment.csv data set:
 ```{r}
 unemployment_df = (
   read_csv("fivethirtyeight_datasets/unemployment.csv") |> 
@@ -33,7 +33,7 @@ unemployment_df = (
 )
 ```
 
-Importing snp.csv data set:
+### Importing snp.csv data set:
 ```{r}
 snp_df = (
   read_csv("fivethirtyeight_datasets/snp.csv") |> 
@@ -41,7 +41,7 @@ snp_df = (
 )
 ```
 
-Cleaning the data in pols_df:
+### Cleaning the data in pols_df:
 ```{r}
 pols_df <- pols_df |> 
   separate(mon, into = c("year", "month", "day"), sep = "-") |> 
@@ -58,7 +58,7 @@ pols_df <- pols_df |>
   select(-prez_dem, -prez_gop, -day) #drops old columns
 ```
 
-Cleaning the data in snp_df:
+### Cleaning the data in snp_df:
 ```{r}
 snp_df <- snp_df |> 
   separate(date, into = c("month", "day", "year"), sep = "/") |> 
@@ -72,7 +72,7 @@ snp_df <- snp_df |>
   select(year, month, close)
 ```
 
-Cleaning the data in unemployment_df:
+### Cleaning the data in unemployment_df:
 ```{r}
 unemployment_df <- unemployment_df |> 
   pivot_longer(
@@ -81,4 +81,19 @@ unemployment_df <- unemployment_df |>
     values_to = "unemployment (%)"  # new column is for the values
   )
 ```
+
+### Joining the data sets:
+```{r}
+merged_df <- left_join(pols_df, snp_df, by = c("year", "month")) |> left_join(unemployment_df, by = c("year", "month"))
+  
+```
+### Description of data sets:  
+The pols-month.csv data set contained 822 observations of 9 variables related to the number of national politicians who are democratic or republican at any given time. I cleaned this data set so that the "mon" column was split into "year", "month", and "day," and replaced the month number with the actual name of the month. The key variables were prez_gop, an indicator of whether the president was republican on the associated date, and prez_dem, an indicator of whether the president was democratic on the associated date. Both columns were binary and had an output of 1 (yes) or 0 (no). I combined these columns into a "president" column, indicating whether the president was democratic or republican for any given date. The years ranged from 1947 to 2015.
+
+The snp.csv data set contained 787 observations of 2 variables related to the S&P, which is often used as a representative measure of the stock market performance as whole. The key variables were "date," which was again split into three columns, and "close," indicating the closing values of the S&P stock index on the given date. The years ranged from 1950 to 2015.
+
+The unemployment.csv data set contained 68 observations of 13 variables. The first column was "year" and every other column was a month out of the year, representing the percentage of unemployment in that particular month in the associated year. I made the data set "longer" so that it can be merged with the other data sets. The years ranged from 1948 to 2015.
+
+The resulting merged data set contains "year" and "month" as the first two columns, since I removed the "day" column from each data set and joined the data sets with these columns as keys. Now we can see whether the president was democratic or republican, the closing values of the S&P, and the unemployment % of each given year/month (if there is data for that year/month). The years ranged from 1947 to 2015. 
+
 
