@@ -176,24 +176,26 @@ zip_codes_df = (
 ```{r}
 zori_df = (
   read_csv("zillow_data/Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv") |> 
-    janitor::clean_names() |> 
-    rename(
-      county = county_name,
-      zip_code = region_name) |>      # took out 'name' in 'county_name' var
-    select(-region_type) |> 
+  janitor::clean_names() |> 
+  rename(
+    # take out 'name' in 'county_name' var
+    county = county_name, 
+    zip_code = region_name) |> 
+  select(-region_type) |> 
   mutate(
-    county = str_remove(county, " County")
-    ) |>   # removed the word 'county' in rows
+    # remove the word 'county' in rows
+    county = str_remove(county, "County")
+  ) |> 
   pivot_longer(
-    cols = - c(region_id:county),
+    cols = -c(region_id:county),
     names_to = "file_date",
-    values_to = "rental_price"
+    values_to= "rental_price"
   ) |> 
   mutate(
-    file_date = str_remove(file_date, "^x" ),
-    file_date = str_replace(file_date, "_", "-"),
+    file_date = str_remove(file_date, "^x"),
+    file_date = str_replace_all(file_date, "_", "-"), 
     file_date = as.Date(file_date, format = "%Y-%m-%d")
-  ) # removed "x" in the file_date rows
+  )
 )
 ```
 
@@ -202,11 +204,14 @@ zori_df = (
 ```{r}
 merged_zillow_df = (
   full_join(zori_df, zip_codes_df, 
-            by = c("zip_code", "county", "file_date")) |> 
-  select(1:3, 
-         file_date,
-         state_fips:neighborhood, 
-         everything())
+            by = c("zip_code", "county")) |> 
+  rename(file_date = file_date.x) |> 
+  select(-file_date.y) |> 
+  select(
+        1:3, 
+        file_date,
+        state_fips:neighborhood, 
+        everything())
 )
 ```
 
@@ -229,4 +234,44 @@ head(missing_zips, 5)
 There are `r n_missing` rows that appear in the zip code data set but not in the zillow rental price data set. From looking at the first five missing zip codes, these zip codes may have very small rental listings during the time period, be a owner-heavy neighborhood, or be industrial areas. For example, 10474, in Hunts Point and Mott Haven, features a significant industrial or mixed-use presence.
 
 
+## Comparing rental prices from Jan 2021 to prices in Jan 2020
 
+
+```{r echo = FALSE}
+# filtering for jan 2020 & jan 2021
+
+jan_data = 
+  merged_zillow_df |> 
+  filter(month(file_date) == 1, 
+         year(file_date) %in%
+          c(2020, 2021)) |> 
+  select(zip_code, county, neighborhood, file_date, rental_price)
+ 
+# changing to wide format with separate 2020 & 2021 rent columns
+
+jan_wide = 
+  jan_data |> 
+  mutate(year = year(file_date)) |> 
+  select(-file_date) |> 
+  pivot_wider(
+    names_from = year,
+    values_from = rental_price,
+    names_prefix = "rent_"
+  )
+
+# calculate drop and get top 10 zip codes with largest drop
+
+top_drops = 
+  jan_wide |> 
+  mutate(rent_drop = rent_2020 - rent_2021) |> 
+  arrange(desc(rent_drop)) |> 
+  slice_head(n = 10)
+
+top_drops |> 
+  mutate(neighborhood = ifelse(is.na(neighborhood), "Unknown", neighborhood))
+
+
+```
+
+
+This is a table I created showing the top 10 zip codes withe the largest drop in price from January 2020 to January 2021. All 10 of these zip codes are in Manhattan, which is typically the borough with the highest rental prices. When there are even moderate percentage drops in the rental prices, the absolute decrease value is still large. The highest drop is $913 in zip code 1007, likely influenced by the COVID-19 pandemic.

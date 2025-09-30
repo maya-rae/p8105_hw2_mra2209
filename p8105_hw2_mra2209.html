@@ -586,24 +586,26 @@ total number of cigarette butts collected by Gwynnda in June of 2022 is
 <h2>Importing and cleaning zori data set:</h2>
 <pre class="r"><code>zori_df = (
   read_csv(&quot;zillow_data/Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv&quot;) |&gt; 
-    janitor::clean_names() |&gt; 
-    rename(
-      county = county_name,
-      zip_code = region_name) |&gt;      # took out &#39;name&#39; in &#39;county_name&#39; var
-    select(-region_type) |&gt; 
+  janitor::clean_names() |&gt; 
+  rename(
+    # take out &#39;name&#39; in &#39;county_name&#39; var
+    county = county_name, 
+    zip_code = region_name) |&gt; 
+  select(-region_type) |&gt; 
   mutate(
-    county = str_remove(county, &quot; County&quot;)
-    ) |&gt;   # removed the word &#39;county&#39; in rows
+    # remove the word &#39;county&#39; in rows
+    county = str_remove(county, &quot;County&quot;)
+  ) |&gt; 
   pivot_longer(
-    cols = - c(region_id:county),
+    cols = -c(region_id:county),
     names_to = &quot;file_date&quot;,
-    values_to = &quot;rental_price&quot;
+    values_to= &quot;rental_price&quot;
   ) |&gt; 
   mutate(
-    file_date = str_remove(file_date, &quot;^x&quot; ),
-    file_date = str_replace(file_date, &quot;_&quot;, &quot;-&quot;),
+    file_date = str_remove(file_date, &quot;^x&quot;),
+    file_date = str_replace_all(file_date, &quot;_&quot;, &quot;-&quot;), 
     file_date = as.Date(file_date, format = &quot;%Y-%m-%d&quot;)
-  ) # removed &quot;x&quot; in the file_date rows
+  )
 )</code></pre>
 <pre><code>## Rows: 149 Columns: 125
 ## ── Column specification ────────────────────────────────────────────────────────
@@ -618,11 +620,14 @@ total number of cigarette butts collected by Gwynnda in June of 2022 is
 <h2>Merging the two zillow data sets:</h2>
 <pre class="r"><code>merged_zillow_df = (
   full_join(zori_df, zip_codes_df, 
-            by = c(&quot;zip_code&quot;, &quot;county&quot;, &quot;file_date&quot;)) |&gt; 
-  select(1:3, 
-         file_date,
-         state_fips:neighborhood, 
-         everything())
+            by = c(&quot;zip_code&quot;, &quot;county&quot;)) |&gt; 
+  rename(file_date = file_date.x) |&gt; 
+  select(-file_date.y) |&gt; 
+  select(
+        1:3, 
+        file_date,
+        state_fips:neighborhood, 
+        everything())
 )</code></pre>
 <p>I have created a merged data set using the ‘full_join’ function so
 that no information from either data set is lost. It joins the data
@@ -659,6 +664,29 @@ zip codes, these zip codes may have very small rental listings during
 the time period, be a owner-heavy neighborhood, or be industrial areas.
 For example, 10474, in Hunts Point and Mott Haven, features a
 significant industrial or mixed-use presence.</p>
+</div>
+<div id="comparing-rental-prices-from-jan-2021-to-prices-in-jan-2020" class="section level2">
+<h2>Comparing rental prices from Jan 2021 to prices in Jan 2020</h2>
+<pre><code>## # A tibble: 10 × 6
+##    zip_code county      neighborhood rent_2020 rent_2021 rent_drop
+##       &lt;dbl&gt; &lt;chr&gt;       &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+##  1    10007 &quot;New York &quot; Unknown          6334.     5422.      913.
+##  2    10069 &quot;New York &quot; Unknown          4623.     3875.      748.
+##  3    10009 &quot;New York &quot; Unknown          3406.     2692.      714.
+##  4    10016 &quot;New York &quot; Unknown          3731.     3019.      712.
+##  5    10001 &quot;New York &quot; Unknown          4108.     3398.      710.
+##  6    10002 &quot;New York &quot; Unknown          3645.     2935.      710.
+##  7    10004 &quot;New York &quot; Unknown          3150.     2444.      706.
+##  8    10038 &quot;New York &quot; Unknown          3573.     2876.      698.
+##  9    10012 &quot;New York &quot; Unknown          3629.     2942.      686.
+## 10    10010 &quot;New York &quot; Unknown          3697.     3012.      685.</code></pre>
+<p>This is a table I created showing the top 10 zip codes withe the
+largest drop in price from January 2020 to January 2021. All 10 of these
+zip codes are in Manhattan, which is typically the borough with the
+highest rental prices. When there are even moderate percentage drops in
+the rental prices, the absolute decrease value is still large. The
+highest drop is $913 in zip code 1007, likely influenced by the COVID-19
+pandemic.</p>
 </div>
 </div>
 
