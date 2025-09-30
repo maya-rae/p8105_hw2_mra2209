@@ -154,4 +154,11 @@ merged_trash_wheels_df = (
 )
 ```
 
+### Description of merged data set:
+
+The three data sets were combined by using the 'bind_rows' function because the data sets have overlapping columns and represent the same type of observations. I made the decision to stack them vertically, with the addition of the "wheel" column, indicating which trash wheel it came from. In the resulting data set, there are `r nrow(merged_trash_wheels_df)` total  observations. By wheel type, mr. trash wheel has `r merged_trash_wheels_df |> filter(wheel == "Mr. Trash Wheel") |> nrow()` observations, professor trash wheel has `r merged_trash_wheels_df |> filter(wheel == "Professor Trash Wheel") |> nrow()` observations, and gwynnda has `r merged_trash_wheels_df |> filter(wheel == "Gwynns Trash Wheel") |>  nrow()` observations. The total weight of trash collected by professor trash wheel is `r merged_trash_wheels_df |> filter(wheel == "Professor Trash Wheel") |>  summarise(total = sum(weight_tons, na.rm = TRUE)) |>  pull(total)` tons. The total number of cigarette butts collected by Gwynnda in June of 2022 is `r merged_trash_wheels_df |>  filter(wheel == "Gwynns Trash Wheel") |>  summarise(total = sum(weight_tons, na.rm = TRUE)) |>  pull(total)`.
+
+
 # Problem 3
+
+
