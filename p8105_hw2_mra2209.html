@@ -368,12 +368,14 @@ date: <strong>2025-09-19</strong></p>
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
 ## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-<pre class="r"><code>library(tibble)</code></pre>
+<pre class="r"><code>library(tibble)
+library(readxl)</code></pre>
 <div id="problem-1" class="section level1">
-<h1><strong>Problem 1</strong></h1>
-<p>Importing pols-month data set:</p>
+<h1>Problem 1</h1>
+<div id="importing-pols-month-data-set" class="section level3">
+<h3>Importing pols-month data set:</h3>
 <pre class="r"><code>pols_df = (
-  read_csv(&quot;fivethirtyeight_datasets/pols-month.csv&quot;) |&gt; 
+  read_csv(&quot;datasets/pols-month.csv&quot;) |&gt; 
     janitor::clean_names()
 )</code></pre>
 <pre><code>## Rows: 822 Columns: 9
@@ -384,10 +386,11 @@ date: <strong>2025-09-19</strong></p>
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
 <div id="importing-unemployment.csv-data-set" class="section level3">
 <h3>Importing unemployment.csv data set:</h3>
 <pre class="r"><code>unemployment_df = (
-  read_csv(&quot;fivethirtyeight_datasets/unemployment.csv&quot;) |&gt; 
+  read_csv(&quot;datasets/unemployment.csv&quot;) |&gt; 
     janitor::clean_names()
 )</code></pre>
 <pre><code>## Rows: 68 Columns: 13
@@ -401,7 +404,7 @@ date: <strong>2025-09-19</strong></p>
 <div id="importing-snp.csv-data-set" class="section level3">
 <h3>Importing snp.csv data set:</h3>
 <pre class="r"><code>snp_df = (
-  read_csv(&quot;fivethirtyeight_datasets/snp.csv&quot;) |&gt; 
+  read_csv(&quot;datasets/snp.csv&quot;) |&gt; 
     janitor::clean_names()
 )</code></pre>
 <pre><code>## Rows: 787 Columns: 2
@@ -453,7 +456,8 @@ date: <strong>2025-09-19</strong></p>
 </div>
 <div id="joining-the-data-sets" class="section level3">
 <h3>Joining the data sets:</h3>
-<pre class="r"><code>merged_df &lt;- left_join(pols_df, snp_df, by = c(&quot;year&quot;, &quot;month&quot;)) |&gt; left_join(unemployment_df, by = c(&quot;year&quot;, &quot;month&quot;))</code></pre>
+<pre class="r"><code>merged_df &lt;- left_join(pols_df, snp_df, by = c(&quot;year&quot;, &quot;month&quot;)) |&gt;
+  left_join(unemployment_df, by = c(&quot;year&quot;, &quot;month&quot;))</code></pre>
 </div>
 <div id="description-of-data-sets" class="section level3">
 <h3>Description of data sets:</h3>
@@ -487,6 +491,27 @@ whether the president was democratic or republican, the closing values
 of the S&amp;P, and the unemployment % of each given year/month (if
 there is data for that year/month). The years ranged from 1947 to
 2015.</p>
+</div>
+</div>
+<div id="problem-2" class="section level1">
+<h1>Problem 2</h1>
+<div id="importing-cleaning-trash-wheel-data-set" class="section level3">
+<h3>Importing &amp; cleaning trash wheel data set:</h3>
+<pre class="r"><code>trash_wheels_df = (
+  read_excel(&quot;datasets/trash_wheel_collection.xlsx&quot;, sheet = &quot;Mr. Trash Wheel&quot;, skip = 1) |&gt;  
+    # skips first row with figure/drawing
+    janitor::clean_names() |&gt; 
+    select(-x15, -x16, -homes_powered) |&gt;  
+    # removes empty columns and columns not containing trash wheels 
+    # specific data
+    mutate(
+      sports_balls = as.integer(round(sports_balls))
+      # converts to an int type &amp; rounds to nearest int
+    )
+)</code></pre>
+<pre><code>## New names:
+## • `` -&gt; `...15`
+## • `` -&gt; `...16`</code></pre>
 </div>
 </div>
 

@@ -10,16 +10,17 @@ date: **2025-09-19**
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r}
 library(tidyverse)
 library(tibble)
+library(readxl)
 ```
-# **Problem 1**  
-Importing pols-month data set:
+
+# Problem 1 
+### Importing pols-month data set:
 ```{r}
 pols_df = (
-  read_csv("fivethirtyeight_datasets/pols-month.csv") |> 
+  read_csv("datasets/pols-month.csv") |> 
     janitor::clean_names()
 )
 
@@ -28,7 +29,7 @@ pols_df = (
 ### Importing unemployment.csv data set:
 ```{r}
 unemployment_df = (
-  read_csv("fivethirtyeight_datasets/unemployment.csv") |> 
+  read_csv("datasets/unemployment.csv") |> 
     janitor::clean_names()
 )
 ```
@@ -36,7 +37,7 @@ unemployment_df = (
 ### Importing snp.csv data set:
 ```{r}
 snp_df = (
-  read_csv("fivethirtyeight_datasets/snp.csv") |> 
+  read_csv("datasets/snp.csv") |> 
     janitor::clean_names()
 )
 ```
@@ -84,7 +85,8 @@ unemployment_df <- unemployment_df |>
 
 ### Joining the data sets:
 ```{r}
-merged_df <- left_join(pols_df, snp_df, by = c("year", "month")) |> left_join(unemployment_df, by = c("year", "month"))
+merged_df <- left_join(pols_df, snp_df, by = c("year", "month")) |>
+  left_join(unemployment_df, by = c("year", "month"))
   
 ```
 ### Description of data sets:  
@@ -95,5 +97,23 @@ The snp.csv data set contained 787 observations of 2 variables related to the S&
 The unemployment.csv data set contained 68 observations of 13 variables. The first column was "year" and every other column was a month out of the year, representing the percentage of unemployment in that particular month in the associated year. I made the data set "longer" so that it can be merged with the other data sets. The years ranged from 1948 to 2015.
 
 The resulting merged data set contains "year" and "month" as the first two columns, since I removed the "day" column from each data set and joined the data sets with these columns as keys. Now we can see whether the president was democratic or republican, the closing values of the S&P, and the unemployment % of each given year/month (if there is data for that year/month). The years ranged from 1947 to 2015. 
+
+# Problem 2
+
+### Importing & cleaning trash wheel data set:
+```{r}
+trash_wheels_df = (
+  read_excel("datasets/trash_wheel_collection.xlsx", sheet = "Mr. Trash Wheel", skip = 1) |>  
+    # skips first row with figure/drawing
+    janitor::clean_names() |> 
+    select(-x15, -x16, -homes_powered) |>  
+    # removes empty columns and columns not containing trash wheels 
+    # specific data
+    mutate(
+      sports_balls = as.integer(round(sports_balls))
+      # converts to an int type & rounds to nearest int
+    )
+)
+```
 
 
