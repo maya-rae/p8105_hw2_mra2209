@@ -495,9 +495,9 @@ there is data for that year/month). The years ranged from 1947 to
 </div>
 <div id="problem-2" class="section level1">
 <h1>Problem 2</h1>
-<div id="importing-cleaning-trash-wheel-data-set" class="section level3">
-<h3>Importing &amp; cleaning trash wheel data set:</h3>
-<pre class="r"><code>trash_wheels_df = (
+<div id="importing-cleaning-mr.-trash-wheel-data-set" class="section level3">
+<h3>Importing &amp; cleaning mr. trash wheel data set:</h3>
+<pre class="r"><code>mr_trash_wheels_df = (
   read_excel(&quot;datasets/trash_wheel_collection.xlsx&quot;, sheet = &quot;Mr. Trash Wheel&quot;, skip = 1) |&gt;  
     # skips first row with figure/drawing
     janitor::clean_names() |&gt; 
@@ -505,7 +505,9 @@ there is data for that year/month). The years ranged from 1947 to
     # removes empty columns and columns not containing trash wheels 
     # specific data
     mutate(
-      sports_balls = as.integer(round(sports_balls))
+      sports_balls = as.integer(round(sports_balls)), 
+      wheel = &quot;Mr. Trash Wheel&quot;,
+      year = as.integer(year)
       # converts to an int type &amp; rounds to nearest int
     )
 )</code></pre>
@@ -513,6 +515,39 @@ there is data for that year/month). The years ranged from 1947 to
 ## • `` -&gt; `...15`
 ## • `` -&gt; `...16`</code></pre>
 </div>
+<div id="importing-and-cleaning-prof-trash-wheel-data-set" class="section level3">
+<h3>Importing and cleaning prof trash wheel data set:</h3>
+<pre class="r"><code>prof_trash_wheels_df = (
+  read_excel(&quot;datasets/trash_wheel_collection.xlsx&quot;, sheet = &quot;Professor Trash Wheel&quot;, skip = 1) |&gt;  
+  janitor::clean_names() |&gt; 
+    select(-homes_powered) |&gt; 
+    mutate( 
+      wheel = &quot;Professor Trash Wheel&quot;,
+      year = as.integer(year)
+      )
+)</code></pre>
+</div>
+<div id="importing-and-cleaning-gwyns-trash-wheel-data-set" class="section level3">
+<h3>Importing and cleaning Gwyns trash wheel data set:</h3>
+<pre class="r"><code>gwyn_trash_wheel_df = (
+  read_excel(&quot;datasets/trash_wheel_collection.xlsx&quot;, sheet = &quot;Gwynns Falls Trash Wheel&quot;, skip = 1) |&gt; 
+    janitor::clean_names() |&gt; 
+    select(-homes_powered) |&gt; 
+    mutate(
+      wheel = &quot;Gwynns Trash Wheel&quot;,
+      year = as.integer(year)
+      )
+)</code></pre>
+</div>
+<div id="combining-all-data-sets" class="section level3">
+<h3>Combining all data sets:</h3>
+<pre class="r"><code>merged_trash_wheels_df = (
+  bind_rows(mr_trash_wheels_df, prof_trash_wheels_df, gwyn_trash_wheel_df)
+)</code></pre>
+</div>
+</div>
+<div id="problem-3" class="section level1">
+<h1>Problem 3</h1>
 </div>
 
 

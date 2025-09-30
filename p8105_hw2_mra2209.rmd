@@ -100,9 +100,9 @@ The resulting merged data set contains "year" and "month" as the first two colum
 
 # Problem 2
 
-### Importing & cleaning trash wheel data set:
+### Importing & cleaning mr. trash wheel data set:
 ```{r}
-trash_wheels_df = (
+mr_trash_wheels_df = (
   read_excel("datasets/trash_wheel_collection.xlsx", sheet = "Mr. Trash Wheel", skip = 1) |>  
     # skips first row with figure/drawing
     janitor::clean_names() |> 
@@ -110,10 +110,48 @@ trash_wheels_df = (
     # removes empty columns and columns not containing trash wheels 
     # specific data
     mutate(
-      sports_balls = as.integer(round(sports_balls))
+      sports_balls = as.integer(round(sports_balls)), 
+      wheel = "Mr. Trash Wheel",
+      year = as.integer(year)
       # converts to an int type & rounds to nearest int
     )
 )
 ```
 
+### Importing and cleaning prof trash wheel data set:
 
+```{r}
+prof_trash_wheels_df = (
+  read_excel("datasets/trash_wheel_collection.xlsx", sheet = "Professor Trash Wheel", skip = 1) |>  
+  janitor::clean_names() |> 
+    select(-homes_powered) |> 
+    mutate( 
+      wheel = "Professor Trash Wheel",
+      year = as.integer(year)
+      )
+)
+  
+```
+
+### Importing and cleaning Gwyns trash wheel data set:
+
+```{r}
+gwyn_trash_wheel_df = (
+  read_excel("datasets/trash_wheel_collection.xlsx", sheet = "Gwynns Falls Trash Wheel", skip = 1) |> 
+    janitor::clean_names() |> 
+    select(-homes_powered) |> 
+    mutate(
+      wheel = "Gwynns Trash Wheel",
+      year = as.integer(year)
+      )
+)
+```
+
+### Combining all data sets:
+```{r}
+merged_trash_wheels_df = (
+  bind_rows(mr_trash_wheels_df, prof_trash_wheels_df, gwyn_trash_wheel_df)
+)
+```
+
+# Problem 3
