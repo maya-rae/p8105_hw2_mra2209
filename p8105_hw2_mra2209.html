@@ -564,6 +564,102 @@ total number of cigarette butts collected by Gwynnda in June of 2022 is
 </div>
 <div id="problem-3" class="section level1">
 <h1>Problem 3</h1>
+<div id="importing-and-cleanign-zip_codes-data-set" class="section level2">
+<h2>Importing and cleanign zip_codes data set:</h2>
+<pre class="r"><code>zip_codes_df = (
+  read_csv(&quot;zillow_data/Zip Codes.csv&quot;) |&gt; 
+    janitor::clean_names() |&gt; 
+    mutate(
+      file_date = as.Date(file_date, format = &quot;%m/%d/%y&quot;)
+    )
+)</code></pre>
+<pre><code>## Rows: 322 Columns: 7
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (4): County, County Code, File Date, Neighborhood
+## dbl (3): State FIPS, County FIPS, ZipCode
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div id="importing-and-cleaning-zori-data-set" class="section level2">
+<h2>Importing and cleaning zori data set:</h2>
+<pre class="r"><code>zori_df = (
+  read_csv(&quot;zillow_data/Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv&quot;) |&gt; 
+    janitor::clean_names() |&gt; 
+    rename(
+      county = county_name,
+      zip_code = region_name) |&gt;      # took out &#39;name&#39; in &#39;county_name&#39; var
+    select(-region_type) |&gt; 
+  mutate(
+    county = str_remove(county, &quot; County&quot;)
+    ) |&gt;   # removed the word &#39;county&#39; in rows
+  pivot_longer(
+    cols = - c(region_id:county),
+    names_to = &quot;file_date&quot;,
+    values_to = &quot;rental_price&quot;
+  ) |&gt; 
+  mutate(
+    file_date = str_remove(file_date, &quot;^x&quot; ),
+    file_date = str_replace(file_date, &quot;_&quot;, &quot;-&quot;),
+    file_date = as.Date(file_date, format = &quot;%Y-%m-%d&quot;)
+  ) # removed &quot;x&quot; in the file_date rows
+)</code></pre>
+<pre><code>## Rows: 149 Columns: 125
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr   (6): RegionType, StateName, State, City, Metro, CountyName
+## dbl (119): RegionID, SizeRank, RegionName, 2015-01-31, 2015-02-28, 2015-03-3...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div id="merging-the-two-zillow-data-sets" class="section level2">
+<h2>Merging the two zillow data sets:</h2>
+<pre class="r"><code>merged_zillow_df = (
+  full_join(zori_df, zip_codes_df, 
+            by = c(&quot;zip_code&quot;, &quot;county&quot;, &quot;file_date&quot;)) |&gt; 
+  select(1:3, 
+         file_date,
+         state_fips:neighborhood, 
+         everything())
+)</code></pre>
+<p>I have created a merged data set using the ‘full_join’ function so
+that no information from either data set is lost. It joins the data
+based on the columns ‘zip_code,’ ‘county’, and ‘file_date,’ meaning that
+if there is matching data in these three columns, they will be returned
+in the same row. If the data does not match in either data set, it will
+keep the row but return NA for the missing information. The total
+observations in the merged data set are 17606. There are 320 unique ZIP
+codes and 43 unique neighborhoods.</p>
+</div>
+<div id="finding-missing-zipcodes" class="section level2">
+<h2>Finding missing zipcodes:</h2>
+<pre class="r"><code>missing_zips = (
+  anti_join(
+    zip_codes_df, zori_df,
+    by = &quot;zip_code&quot;))
+ 
+# count how many are missing
+n_missing = nrow(missing_zips)
+
+# view the first few rows
+head(missing_zips, 5) </code></pre>
+<pre><code>## # A tibble: 5 × 7
+##   county state_fips county_code county_fips zip_code file_date  neighborhood    
+##   &lt;chr&gt;       &lt;dbl&gt; &lt;chr&gt;             &lt;dbl&gt;    &lt;dbl&gt; &lt;date&gt;     &lt;chr&gt;           
+## 1 Bronx          36 005               36005    10464 2007-07-25 Southeast Bronx 
+## 2 Bronx          36 005               36005    10474 2007-07-25 Hunts Point and…
+## 3 Bronx          36 005               36005    10475 2007-07-25 Northeast Bronx 
+## 4 Bronx          36 005               36005    10499 2007-07-25 &lt;NA&gt;            
+## 5 Bronx          36 005               36005    10550 2007-07-25 &lt;NA&gt;</code></pre>
+<p>There are 171 rows that appear in the zip code data set but not in
+the zillow rental price data set. From looking at the first five missing
+zip codes, these zip codes may have very small rental listings during
+the time period, be a owner-heavy neighborhood, or be industrial areas.
+For example, 10474, in Hunts Point and Mott Haven, features a
+significant industrial or mixed-use presence.</p>
+</div>
 </div>
 
 

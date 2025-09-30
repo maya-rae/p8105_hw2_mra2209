@@ -156,11 +156,77 @@ merged_trash_wheels_df = (
 
 ### Description of merged data set:
 
-The three data sets were combined by using the 'bind_rows' function because the data sets have overlapping columns and represent the same type of observations. I made the decision to stack them vertically, with the addition of the "wheel" column, indicating which trash wheel it came from. In the resulting data set, there are `r nrow(merged_trash_wheels_df)` total observations. By wheel type, mr. trash wheel has `r merged_trash_wheels_df |> filter(wheel == "Mr. Trash Wheel") |> nrow()` observations, professor trash wheel has `r merged_trash_wheels_df |> filter(wheel == "Professor Trash Wheel") |> nrow()` observations, and gwynnda has `r merged_trash_wheels_df |> filter(wheel == "Gwynns Trash Wheel") |>  nrow()` observations. The data set contains the variable 'weight_tons' and 'volume_cubic_yards,' indicating the total amount of litter in tons and the volume of litter in cubic yards, respectively. The next columns show the litter type. The total weight of trash collected by professor trash wheel is `r merged_trash_wheels_df |> filter(wheel == "Professor Trash Wheel") |>  summarise(total = sum(weight_tons, na.rm = TRUE)) |>  pull(total)` tons. The total number of cigarette butts collected by Gwynnda in June of 2022 is `r merged_trash_wheels_df |>  filter(wheel == "Gwynns Trash Wheel") |>  summarise(total = sum(weight_tons, na.rm = TRUE)) |>  pull(total)`.
+The three data sets were combined by using the 'bind_rows' function because the data sets have overlapping columns and represent the same type of observations. I made the decision to stack them vertically, with the addition of the "wheel" column, indicating which trash wheel it came from. In the resulting data set, there are `r nrow(merged_trash_wheels_df)` total observations. By wheel type, mr. trash wheel has `r merged_trash_wheels_df |> filter(wheel == "Mr. Trash Wheel") |> nrow()` observations, professor trash wheel has `r merged_trash_wheels_df |> filter(wheel == "Professor Trash Wheel") |> nrow()` observations, and gwynnda has `r merged_trash_wheels_df |> filter(wheel == "Gwynns Trash Wheel") |>  nrow()` observations. The data set contains the variable 'weight_tons' and 'volume_cubic_yards,' indicating the total amount of litter in tons and the volume of litter in cubic yards, respectively. The next columns show the litter type. The total weight of trash collected by professor trash wheel is `r merged_trash_wheels_df |> filter(wheel == "Professor Trash Wheel") |>  summarise(total = sum(weight_tons, na.rm = TRUE)) |>  pull(total)` tons. The total number of cigarette butts collected by Gwynnda in June of 2022 is `r merged_trash_wheels_df |>  filter(wheel == "Gwynns Trash Wheel") |> summarise(total = sum(weight_tons, na.rm = TRUE)) |>  pull(total)`.
 
 # Problem 3
 
+## Importing and cleanign zip_codes data set:
+```{r}
+zip_codes_df = (
+  read_csv("zillow_data/Zip Codes.csv") |> 
+    janitor::clean_names() |> 
+    mutate(
+      file_date = as.Date(file_date, format = "%m/%d/%y")
+    )
+)
+```
 
+## Importing and cleaning zori data set:
+
+```{r}
+zori_df = (
+  read_csv("zillow_data/Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv") |> 
+    janitor::clean_names() |> 
+    rename(
+      county = county_name,
+      zip_code = region_name) |>      # took out 'name' in 'county_name' var
+    select(-region_type) |> 
+  mutate(
+    county = str_remove(county, " County")
+    ) |>   # removed the word 'county' in rows
+  pivot_longer(
+    cols = - c(region_id:county),
+    names_to = "file_date",
+    values_to = "rental_price"
+  ) |> 
+  mutate(
+    file_date = str_remove(file_date, "^x" ),
+    file_date = str_replace(file_date, "_", "-"),
+    file_date = as.Date(file_date, format = "%Y-%m-%d")
+  ) # removed "x" in the file_date rows
+)
+```
+
+## Merging the two zillow data sets:
+
+```{r}
+merged_zillow_df = (
+  full_join(zori_df, zip_codes_df, 
+            by = c("zip_code", "county", "file_date")) |> 
+  select(1:3, 
+         file_date,
+         state_fips:neighborhood, 
+         everything())
+)
+```
+
+I have created a merged data set using the 'full_join' function so that no information from either data set is lost. It joins the data based on the columns 'zip_code,' 'county', and 'file_date,' meaning that if there is matching data in these three columns, they will be returned in the same row. If the data does not match in either data set, it will keep the row but return NA for the missing information. The total observations in the merged data set are `r nrow(merged_zillow_df)`. There are `r merged_zillow_df %>% pull(zip_code) |>  n_distinct()` unique ZIP codes and `r merged_zillow_df |> pull(neighborhood) |>  n_distinct()` unique neighborhoods.
+
+## Finding missing zipcodes:
+
+```{r}
+missing_zips = (
+  anti_join(
+    zip_codes_df, zori_df,
+    by = "zip_code"))
+ 
+# count how many are missing
+n_missing = nrow(missing_zips)
+
+# view the first few rows
+head(missing_zips, 5) 
+```
+There are `r n_missing` rows that appear in the zip code data set but not in the zillow rental price data set. From looking at the first five missing zip codes, these zip codes may have very small rental listings during the time period, be a owner-heavy neighborhood, or be industrial areas. For example, 10474, in Hunts Point and Mott Haven, features a significant industrial or mixed-use presence.
 
 
 
